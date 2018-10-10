@@ -33,15 +33,29 @@ class Tweet {
             dictionary = originalTweet
         }
         
-        id = dictionary["id"] as! Int
-        text = dictionary["text"] as! String
+        id = dictionary["id"] as? Int
+        text = dictionary["text"] as? String
         favoriteCount = dictionary["favorite_count"] as? Int
         favorited = dictionary["favorited"] as? Bool
-        retweetCount = dictionary["retweet_count"] as! Int
-        retweeted = dictionary["retweeted"] as! Bool
+        retweetCount = dictionary["retweet_count"] as? Int
+        retweeted = dictionary["retweeted"] as? Bool
+        
         
         // TODO: initialize user
+        let user = dictionary["user"] as! [String: Any]
+        self.user = User(dictionary: user)
         
         // TODO: Format and set createdAtString
+        createdAtString = dictionary["created_at"] as? String
     }
+    
+    static func tweets(with array: [[String: Any]]) -> [Tweet] {
+        var tweets: [Tweet] = []
+        for tweetDictionary in array {
+            let tweet = Tweet(dictionary: tweetDictionary)
+            tweets.append(tweet)
+        }
+        return tweets
+    }
+    
 }

@@ -19,14 +19,15 @@ class LoginViewController: UIViewController {
         super.viewDidAppear(animated)
     }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
+//    override func didReceiveMemoryWarning() {
+//        super.didReceiveMemoryWarning()
+//        // Dispose of any resources that can be recreated.
+//    }
     
     
     @IBAction func didTapLogin(_ sender: Any) {
         APIManager.shared.login(success: {
+            print("Succes")
             self.performSegue(withIdentifier: "loginSegue", sender: nil)
         }) { (error) in
             if let error = error {
