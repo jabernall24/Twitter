@@ -1,8 +1,8 @@
 //
-//  TweetCell.swift
+//  TweetDetailViewController.swift
 //  twitter_alamofire_demo
 //
-//  Created by Jesus Andres Bernal Lopez on 10/4/18.
+//  Created by Jesus Andres Bernal Lopez on 10/10/18.
 //  Copyright © 2018 Charles Hieger. All rights reserved.
 //
 
@@ -10,20 +10,49 @@ import UIKit
 import TTTAttributedLabel
 import DateToolsSwift
 
-class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
-
+class TweetDetailViewController: UIViewController, TTTAttributedLabelDelegate {
+    
     @IBOutlet weak var profileImageView: UIImageView!
-    @IBOutlet weak var authorLabel: UILabel!
-    @IBOutlet weak var tweetTextLabel: TTTAttributedLabel!
+    @IBOutlet weak var userNameLabel: UILabel!
+    @IBOutlet weak var userNameScreenNameLabel: UILabel!
+    @IBOutlet weak var tweetLabel: TTTAttributedLabel!
+    @IBOutlet weak var timestampLabel: UILabel!
     @IBOutlet weak var retweetCountLabel: UILabel!
     @IBOutlet weak var favoriteCountLabel: UILabel!
-    @IBOutlet weak var favoriteButton: UIButton!
-    @IBOutlet weak var screenNameLabel: UILabel!
-    @IBOutlet weak var createdAtLabel: UILabel!
     @IBOutlet weak var retweetButton: UIButton!
+    @IBOutlet weak var favoriteButton: UIButton!
     
-    var tweet: Tweet!{
-        didSet{
+    var tweet: Tweet!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        navigationItem.title = "Tweet"
+        tweetLabel.delegate = self
+        tweetLabel.enabledTextCheckingTypes = NSTextCheckingResult.CheckingType.link.rawValue
+        
+        if let tweet = tweet{
+            let url = URL(string: tweet.user!.profile_image_url_https!)
+            let data = try! Data(contentsOf: url!)
+            profileImageView.image = UIImage(data: data)
+            
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "EEE MMM dd HH:mm:ss Z yyyy"
+            guard let date = dateFormatter.date(from: tweet.createdAtString!) else {
+                fatalError("ERROR: Date conversion failed due to mismatched format.")
+            }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "MM/dd/yy, HH:mm a"
+            formatter.amSymbol = "AM"
+            formatter.pmSymbol = "PM"
+            let displayDate = formatter.string(from: date)
+            timestampLabel.text = displayDate
+            
+            userNameLabel.text = tweet.user?.name
+            userNameScreenNameLabel.text = "@\(String(describing: tweet.user!.screenName!))"
+            tweetLabel.text = tweet.fullText
+            retweetCountLabel.text = String(describing: tweet.retweetCount!)
+            favoriteCountLabel.text = String(describing: tweet.favoriteCount!)
+            
             if tweet.favorited == true{
                 favoriteButton.setBackgroundImage(UIImage(named: "favor-icon-red"), for: .normal)
             }else{
@@ -36,39 +65,7 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
                 retweetButton.setBackgroundImage(UIImage(named: "retweet-icon"), for: .normal)
             }
             
-            let url = URL(string: tweet.user!.profile_image_url_https!)
-            let data = try! Data(contentsOf: url!)
-            profileImageView.image = UIImage(data: data)
-            
-            authorLabel.text = tweet.user?.name
-            tweetTextLabel.text = tweet.fullText
-            
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "EEE MMM dd HH:mm:ss Z yyyy"
-            guard let date = dateFormatter.date(from: tweet.createdAtString!) else {
-                fatalError("ERROR: Date conversion failed due to mismatched format.")
-            }
-            
-            screenNameLabel.text = "@\(String(describing: tweet.user!.screenName!))"
-            createdAtLabel.text = date.shortTimeAgoSinceNow
-            favoriteCountLabel.text = String(describing: tweet.favoriteCount!)
-            retweetCountLabel.text = String(describing: tweet.retweetCount!)
-            
-            
         }
-    }
-    
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        
-        // Initialization code
-        tweetTextLabel.delegate = self
-        tweetTextLabel.enabledTextCheckingTypes = NSTextCheckingResult.CheckingType.link.rawValue
-    }
-    
-    func attributedLabel(_ label: TTTAttributedLabel!, didSelectLinkWith url: URL!) {
-        UIApplication.shared.open(url, options: [:])
-        
     }
     
     @IBAction func onRetweet(_ sender: Any) {
@@ -112,6 +109,7 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
             }
         }
     }
+    
     func unFavorite(){
         APIManager.shared.unFavorite(tweet) { (tweet: Tweet?, error: Error?) in
             if let  error = error {
@@ -142,11 +140,15 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
         }
     }
     
-    
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
+    func attributedLabel(_ label: TTTAttributedLabel!, didSelectLinkWith url: URL!) {
+        UIApplication.shared.open(url, options: [:])
     }
-
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let followersProfileViewController = segue.destination as? FollowersProfileViewController{
+            followersProfileViewController.tweet = tweet
+        }
+    }
+    
+    
 }

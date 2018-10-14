@@ -8,9 +8,15 @@
 
 import UIKit
 
-class TimelineViewController: UIViewController, UITableViewDataSource {
+class TimelineViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ComposeViewControllerDelegate {
+    
+    func did(post: Tweet) {
+        self.getTweets()
+    }
+    
 
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     var tweets: [Tweet] = []
     var refresh = UIRefreshControl()
@@ -18,15 +24,25 @@ class TimelineViewController: UIViewController, UITableViewDataSource {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        getTweets()
-        
         refresh.addTarget(self, action: #selector(didPullToRefresh(_:)), for: .valueChanged)
         didPullToRefresh(refresh)
-        
         tableView.insertSubview(refresh, at: 0)
+        
         tableView.dataSource = self
-        tableView.estimatedRowHeight = 80
+        tableView.delegate = self
+        tableView.estimatedRowHeight = 100
         tableView.rowHeight = UITableViewAutomaticDimension
+        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(true)
+        navigationItem.title = ""
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(true)
+        navigationItem.title = "Home"
     }
     
     @IBAction func onLogOut(_ sender: Any) {
@@ -44,12 +60,18 @@ class TimelineViewController: UIViewController, UITableViewDataSource {
         return cell
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
+    
     func getTweets(){
+        activityIndicator.startAnimating()
         APIManager.shared.getHomeTimeLine { (tweet: [Tweet]?,error: Error?) in
             if let tweet = tweet{
                 self.tweets = tweet
                 self.tableView.reloadData()
                 self.refresh.endRefreshing()
+                self.activityIndicator.stopAnimating()
             }else{
                 print("error: ", error?.localizedDescription ?? "Unknown" )
             }
@@ -60,4 +82,26 @@ class TimelineViewController: UIViewController, UITableViewDataSource {
     @objc func didPullToRefresh(_ refreshControl: UIRefreshControl){
         getTweets()
     }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let tweetDetailViewController = segue.destination as? TweetDetailViewController{
+            let cell = sender as! UITableViewCell
+            if let indexPath = tableView.indexPath(for: cell){
+                let tweet = tweets[indexPath.row]
+                tweetDetailViewController.tweet = tweet
+            }
+        }
+        
+        if let composeViewController = segue.destination as? ComposeViewController{
+            composeViewController.delegate = self
+        }
+        
+    }
+    
+    private func calculateIndexPathsToReload(from newTweets: [Tweet]) -> [IndexPath] {
+        let startIndex = tweets.count - newTweets.count
+        let endIndex = startIndex + newTweets.count
+        return (startIndex..<endIndex).map { IndexPath(row: $0, section: 0) }
+    }
+    
 }

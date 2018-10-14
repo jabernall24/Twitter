@@ -1,26 +1,25 @@
 //
-//  TweetCell.swift
+//  ProfileCell.swift
 //  twitter_alamofire_demo
 //
-//  Created by Jesus Andres Bernal Lopez on 10/4/18.
+//  Created by Jesus Andres Bernal Lopez on 10/13/18.
 //  Copyright © 2018 Charles Hieger. All rights reserved.
 //
 
 import UIKit
-import TTTAttributedLabel
 import DateToolsSwift
+import TTTAttributedLabel
 
-class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
+class ProfileCell: UITableViewCell, TTTAttributedLabelDelegate {
 
     @IBOutlet weak var profileImageView: UIImageView!
-    @IBOutlet weak var authorLabel: UILabel!
-    @IBOutlet weak var tweetTextLabel: TTTAttributedLabel!
-    @IBOutlet weak var retweetCountLabel: UILabel!
-    @IBOutlet weak var favoriteCountLabel: UILabel!
-    @IBOutlet weak var favoriteButton: UIButton!
-    @IBOutlet weak var screenNameLabel: UILabel!
-    @IBOutlet weak var createdAtLabel: UILabel!
+    @IBOutlet weak var usernameLabel: UILabel!
+    @IBOutlet weak var screenNameTimeLabel: UILabel!
+    @IBOutlet weak var tweetLabel: TTTAttributedLabel!
     @IBOutlet weak var retweetButton: UIButton!
+    @IBOutlet weak var retweetCountLabel: UILabel!
+    @IBOutlet weak var favoriteButton: UIButton!
+    @IBOutlet weak var favoriteCountLabel: UILabel!
     
     var tweet: Tweet!{
         didSet{
@@ -40,8 +39,8 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
             let data = try! Data(contentsOf: url!)
             profileImageView.image = UIImage(data: data)
             
-            authorLabel.text = tweet.user?.name
-            tweetTextLabel.text = tweet.fullText
+            usernameLabel.text = tweet.user?.name
+            tweetLabel.text = tweet.fullText
             
             let dateFormatter = DateFormatter()
             dateFormatter.dateFormat = "EEE MMM dd HH:mm:ss Z yyyy"
@@ -49,8 +48,7 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
                 fatalError("ERROR: Date conversion failed due to mismatched format.")
             }
             
-            screenNameLabel.text = "@\(String(describing: tweet.user!.screenName!))"
-            createdAtLabel.text = date.shortTimeAgoSinceNow
+            screenNameTimeLabel.text = "@\(String(describing: tweet.user!.screenName!)) · \(date.shortTimeAgoSinceNow)"
             favoriteCountLabel.text = String(describing: tweet.favoriteCount!)
             retweetCountLabel.text = String(describing: tweet.retweetCount!)
             
@@ -60,15 +58,12 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
     
     override func awakeFromNib() {
         super.awakeFromNib()
-        
-        // Initialization code
-        tweetTextLabel.delegate = self
-        tweetTextLabel.enabledTextCheckingTypes = NSTextCheckingResult.CheckingType.link.rawValue
+        tweetLabel.delegate = self
+        tweetLabel.enabledTextCheckingTypes = NSTextCheckingResult.CheckingType.link.rawValue
     }
     
     func attributedLabel(_ label: TTTAttributedLabel!, didSelectLinkWith url: URL!) {
         UIApplication.shared.open(url, options: [:])
-        
     }
     
     @IBAction func onRetweet(_ sender: Any) {
@@ -102,6 +97,7 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
             favoriteCountLabel.text = String(describing: tweet.favoriteCount!)
         }
     }
+    
     
     func favorite(){
         APIManager.shared.favorite(tweet) { (tweet: Tweet?, error: Error?) in
@@ -142,11 +138,9 @@ class TweetCell: UITableViewCell, TTTAttributedLabelDelegate {
         }
     }
     
-    
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
 
-        // Configure the view for the selected state
     }
 
 }

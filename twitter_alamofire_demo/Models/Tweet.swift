@@ -11,6 +11,7 @@ import Foundation
 class Tweet {
     var id: Int? // For favoriting, retweeting & replying
     var text: String? // Text content of tweet
+    var fullText: String?
     var favoriteCount: Int? // Update favorite count label
     var favorited: Bool? // Configure favorite button
     var retweetCount: Int? // Update favorite count label
@@ -32,8 +33,8 @@ class Tweet {
             // Change tweet to original tweet
             dictionary = originalTweet
         }
-        
         id = dictionary["id"] as? Int
+        fullText = dictionary["full_text"] as? String
         text = dictionary["text"] as? String
         favoriteCount = dictionary["favorite_count"] as? Int
         favorited = dictionary["favorited"] as? Bool
