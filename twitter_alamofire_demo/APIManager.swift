@@ -15,8 +15,8 @@ import KeychainAccess
 class APIManager: SessionManager {
     
     // MARK: TODO: Add App Keys
-    static let consumerKey = "YOUR_KEY_HERE"  //
-    static let consumerSecret = "YOUR_SECRET_HERE" // 
+    static let consumerKey = "uFTmFW66AAMEUwx3rZlZDMSCf"  // YOUR_KEY_HERE
+    static let consumerSecret = "LtlxIoQpBvHcqjpSMIA9Gs2E9wCJbr7xkx9EpSdBYoNedaZUgh" // YOUR_SECRET_HERE
 
     static let requestTokenURL = "https://api.twitter.com/oauth/request_token"
     static let authorizeURL = "https://api.twitter.com/oauth/authorize"
@@ -24,10 +24,12 @@ class APIManager: SessionManager {
     
     static let callbackURLString = "alamoTwitter://"
     
+
+    
     let param = [
         "tweet_mode" : "extended"
-    ]
-    
+    ] as [String : Any]
+//
     // MARK: Twitter API methods
     func login(success: @escaping () -> (), failure: @escaping (Error?) -> ()) {
         
@@ -70,23 +72,14 @@ class APIManager: SessionManager {
                 }
         }
     }
+    
+    func getHomeTimeLine(max_id: Int?,completion: @escaping ([Tweet]?, Error?) -> ()) {
+        let param = [
+            "tweet_mode" : "extended",
+            "max_id" : max_id!
+            ] as [String : Any]
         
-    func getHomeTimeLine(completion: @escaping ([Tweet]?, Error?) -> ()) {
-        
-        // This uses tweets from disk to avoid hitting rate limit. Comment out if you want fresh
-        // tweets,
-        
-//        if let data = UserDefaults.standard.object(forKey: "hometimeline_tweets") as? Data {
-//            let tweetDictionaries = NSKeyedUnarchiver.unarchiveObject(with: data) as! [[String: Any]]
-//            let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
-//                Tweet(dictionary: dictionary)
-//            })
-//
-//            completion(tweets, nil)
-//            return
-//        }
-        
-        request(URL(string: "https://api.twitter.com/1.1/statuses/home_timeline.json")!, method: .get, parameters: param)
+        request(URL(string: "https://api.twitter.com/1.1/statuses/home_timeline/.json")!, method: .get, parameters: param)
             .validate()
             .responseJSON { (response) in
                 switch response.result {
@@ -100,7 +93,6 @@ class APIManager: SessionManager {
                         completion(nil, error)
                         return
                     }
-                    
                     let data = NSKeyedArchiver.archivedData(withRootObject: tweetDictionaries)
                     UserDefaults.standard.set(data, forKey: "hometimeline_tweets")
                     UserDefaults.standard.synchronize()
@@ -109,6 +101,52 @@ class APIManager: SessionManager {
                         Tweet(dictionary: dictionary)
                     })
                     
+                    print(tweetDictionaries.capacity)
+                    print(tweetDictionaries.count)
+                    completion(tweets, nil)
+                }
+        }
+        
+    }
+        
+    func getHomeTimeLine(completion: @escaping ([Tweet]?, Error?) -> ()) {
+        // This uses tweets from disk to avoid hitting rate limit. Comment out if you want fresh
+        // tweets,
+        
+//        if let data = UserDefaults.standard.object(forKey: "hometimeline_tweets") as? Data {
+//            let tweetDictionaries = NSKeyedUnarchiver.unarchiveObject(with: data) as! [[String: Any]]
+//            let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
+//                Tweet(dictionary: dictionary)
+//            })
+//
+//            completion(tweets, nil)
+//            return
+//        }
+        
+        request(URL(string: "https://api.twitter.com/1.1/statuses/home_timeline/.json")!, method: .get, parameters: param)
+            .validate()
+            .responseJSON { (response) in
+                switch response.result {
+                case .failure(let error):
+                    completion(nil, error)
+                    return
+                case .success:
+                    guard let tweetDictionaries = response.result.value as? [[String: Any]] else {
+                        print("Failed to parse tweets")
+                        let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Failed to parse tweets"])
+                        completion(nil, error)
+                        return
+                    }
+                    let data = NSKeyedArchiver.archivedData(withRootObject: tweetDictionaries)
+                    UserDefaults.standard.set(data, forKey: "hometimeline_tweets")
+                    UserDefaults.standard.synchronize()
+                    
+                    let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
+                        Tweet(dictionary: dictionary)
+                    })
+                    
+                    print(tweetDictionaries.capacity)
+                    print(tweetDictionaries.count)
                     completion(tweets, nil)
                 }
         }

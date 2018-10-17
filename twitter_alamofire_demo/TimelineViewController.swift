@@ -8,7 +8,7 @@
 
 import UIKit
 
-class TimelineViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ComposeViewControllerDelegate {
+class TimelineViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, ComposeViewControllerDelegate, UIScrollViewDelegate {
     
     func did(post: Tweet) {
         self.getTweets()
@@ -20,6 +20,7 @@ class TimelineViewController: UIViewController, UITableViewDataSource, UITableVi
     
     var tweets: [Tweet] = []
     var refresh = UIRefreshControl()
+    var max_id: Int?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -57,6 +58,10 @@ class TimelineViewController: UIViewController, UITableViewDataSource, UITableVi
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TweetCell", for: indexPath) as! TweetCell
         cell.tweet = tweets[indexPath.row]
+        
+        if(indexPath.row == self.tweets.count - 1){
+            moreTweets()
+        }
         return cell
     }
     
@@ -66,9 +71,10 @@ class TimelineViewController: UIViewController, UITableViewDataSource, UITableVi
     
     func getTweets(){
         activityIndicator.startAnimating()
-        APIManager.shared.getHomeTimeLine { (tweet: [Tweet]?,error: Error?) in
+        APIManager.shared.getHomeTimeLine( completion: { (tweet: [Tweet]?,error: Error?) in
             if let tweet = tweet{
                 self.tweets = tweet
+                self.max_id = tweet[tweet.count - 1].id
                 self.tableView.reloadData()
                 self.refresh.endRefreshing()
                 self.activityIndicator.stopAnimating()
@@ -76,6 +82,20 @@ class TimelineViewController: UIViewController, UITableViewDataSource, UITableVi
                 print("error: ", error?.localizedDescription ?? "Unknown" )
             }
 
+        })
+    }
+    
+    func moreTweets(){
+        APIManager.shared.getHomeTimeLine(max_id: max_id) { (tweet: [Tweet]?,error: Error?) in
+            if let tweet = tweet{
+                self.tweets.append(contentsOf: tweet)
+                self.max_id = tweet[tweet.count - 1].id
+                self.tableView.reloadData()
+                self.refresh.endRefreshing()
+                self.activityIndicator.stopAnimating()
+            }else{
+                print("error: ", error?.localizedDescription ?? "Unknown" )
+            }
         }
     }
     

@@ -29,7 +29,7 @@ class TweetDetailViewController: UIViewController, TTTAttributedLabelDelegate {
         navigationItem.title = "Tweet"
         tweetLabel.delegate = self
         tweetLabel.enabledTextCheckingTypes = NSTextCheckingResult.CheckingType.link.rawValue
-        
+                
         if let tweet = tweet{
             let url = URL(string: tweet.user!.profile_image_url_https!)
             let data = try! Data(contentsOf: url!)
